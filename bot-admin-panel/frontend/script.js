@@ -1,199 +1,272 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Globals ---
-    let currentContact = null;
-// Use the API_BASE_URL injected by the server in index.html
-    const API_BASE_URL = ''
+    // Usamos la nueva URL proxyada via Apache -> app.py
+    const API_BASE_URL = 'https://api.fundacionidear.com/dashboard/api'; 
 
-    // --- DOM Elements ---
-    const conversationList = document.getElementById('conversation-list');
-    const chatView = document.getElementById('chat-view');
-    const chatHeader = document.getElementById('chat-header');
-    const chatMessages = document.getElementById('chat-messages');
-    const messageInputContainer = document.getElementById('chat-input-container');
-    const messageInput = document.getElementById('message-input');
-    const sendButton = document.getElementById('send-button');
-    // Debug elements
-    const testButton = document.getElementById('test-button');
-    const logOutput = document.getElementById('log-output');
+    const chatListElement = document.getElementById('chat-list');
+    const chatViewElement = document.getElementById('chat-view');
+    const welcomeViewElement = document.getElementById('welcome-view');
+    const sidebarElement = document.getElementById('sidebar');
+    const backBtn = document.getElementById('back-btn');
+    const botSelector = document.getElementById('bot-selector-main');
 
-    // --- Debug Functions ---
-    function logToScreen(message) {
-        console.log(message); // Also log to console for good measure
-        logOutput.textContent += `[${new Date().toLocaleTimeString()}] ${message}\n`;
-        logOutput.scrollTop = logOutput.scrollHeight;
+    let currentPhone = null;
+    let messagesInterval = null;
+    let chatsInterval = null;
+    let currentBotId = 'default';
+
+    // --- Funciones de UI y Responsividad ---
+    function showChatView() {
+        welcomeViewElement.classList.add('hidden');
+        chatViewElement.classList.remove('hidden');
+        if (window.innerWidth <= 768) {
+            sidebarElement.classList.add('hidden-mobile');
+        }
     }
 
-    async function runApiTest() {
-        logToScreen("--- Iniciando Test de API ---");
-        const url = `${API_BASE_URL}/api/conversations`;
-        logToScreen(`1. URL del Fetch: ${url}`);
-        
+    function showSidebar() {
+        if (window.innerWidth <= 768) {
+            sidebarElement.classList.remove('hidden-mobile');
+            chatViewElement.classList.add('hidden');
+        } else {
+            welcomeViewElement.classList.remove('hidden');
+            chatViewElement.classList.add('hidden');
+        }
+        currentPhone = null;
+        if(messagesInterval) clearInterval(messagesInterval);
+        document.querySelectorAll('#chat-list li').forEach(el => el.classList.remove('selected'));
+    }
+
+    backBtn.addEventListener('click', showSidebar);
+
+    botSelector.addEventListener('change', (e) => {
+        currentBotId = e.target.value;
+        // En el futuro, esto cambiaría el API_BASE_URL o añadiría un query param.
+        // Por ahora recargamos los chats del bot actual.
+        showSidebar();
+        fetchConversations();
+    });
+
+    // --- Funciones API ---
+    async function fetchConversations() {
         try {
-            logToScreen("2. Realizando petición fetch...");
-            const response = await fetch(url);
-            logToScreen(`3. Respuesta recibida. Status: ${response.status} ${response.statusText}`);
+            const res = await fetch(`${API_BASE_URL}/conversations`);
+            if (!res.ok) throw new Error("API error");
+            const conversations = await res.json();
+            renderChatList(conversations);
+        } catch (e) {
+            console.error('Error fetching conversations:', e);
+            if (!chatListElement.innerHTML.includes('li')) {
+                chatListElement.innerHTML = '<li style="padding:15px; color:red;">Error de conexión. Reintentando...</li>';
+            }
+        }
+    }
+
+    function renderChatList(conversations) {
+        if (!conversations || conversations.length === 0) {
+            chatListElement.innerHTML = '<li style="padding:15px;">No hay conversaciones.</li>';
+            return;
+        }
+
+        const currentElements = Array.from(chatListElement.children);
+        const incomingPhones = conversations.map(c => c.phone_number);
+
+        conversations.forEach(chat => {
+            let li = chatListElement.querySelector(`li[data-phone="${chat.phone_number}"]`);
+            const isActive = (String(chat.is_human_intervening) === 'true');
+            const name = chat.name || 'Desconocido';
             
-            const headers = {};
-            response.headers.forEach((value, key) => {
-                headers[key] = value;
-            });
-            logToScreen(`4. Cabeceras de la respuesta:\n${JSON.stringify(headers, null, 2)}`);
+            if (!li) {
+                li = document.createElement('li');
+                li.dataset.phone = chat.phone_number;
+                chatListElement.appendChild(li);
+            }
 
-            logToScreen("5. Leyendo cuerpo de la respuesta como texto plano...");
-            const rawText = await response.text();
-            logToScreen(`6. Respuesta en texto plano (RAW):\n---\n${rawText}\n---`);
+            li.dataset.name = name;
+            li.dataset.isHuman = chat.is_human_intervening;
 
-            logToScreen("7. Intentando parsear texto como JSON...");
-            const jsonData = JSON.parse(rawText);
-            logToScreen("8. ¡Éxito! El JSON es válido.");
-            logToScreen(`9. Chats encontrados: ${jsonData.length}`);
-        } catch (error) {
-            logToScreen(`--- ¡ERROR! ---`);
-            logToScreen(error.toString());
-            logToScreen(`Stack Trace: ${error.stack}`);
+            const contentHtml = `
+                <div class="chat-item-name">
+                    <span>${name}</span>
+                    <span>${isActive ? '👤' : '🤖'}</span>
+                </div>
+                <div class="chat-item-phone">${chat.phone_number}</div>
+            `;
+
+            if (li.innerHTML !== contentHtml) {
+                li.innerHTML = contentHtml;
+            }
+
+            if (currentPhone === chat.phone_number) {
+                li.classList.add('selected');
+                updateInterventionButton(chat.is_human_intervening);
+            } else {
+                li.classList.remove('selected');
+            }
+        });
+
+        currentElements.forEach(el => {
+            if (el.dataset.phone && !incomingPhones.includes(el.dataset.phone)) {
+                el.remove();
+            }
+        });
+    }
+
+    function updateInterventionButton(isHuman) {
+        const btn = document.getElementById('human-toggle');
+        if (btn) {
+            const active = (String(isHuman) === 'true');
+            btn.className = active ? 'active' : '';
+            btn.textContent = active ? '👤 Modo Humano (ON)' : '🤖 Modo Bot (ON)';
+            
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            newBtn.addEventListener('click', () => toggleHuman(currentPhone, active));
         }
     }
 
+    async function loadChatDetail(phone, name, isHuman) {
+        currentPhone = phone;
 
-    // --- Core Functions ---
-
-    function renderMessage(msg) {
-        const messageElement = document.createElement('div');
-        messageElement.classList.add('message', msg.sender.toLowerCase());
-        const senderLabel = document.createElement('div');
-        senderLabel.classList.add('sender-label');
-        if (msg.sender.toLowerCase() === 'human') senderLabel.textContent = 'Tú (Manual)';
-        else if (msg.sender.toLowerCase() === 'bot') senderLabel.textContent = 'Bot';
+        // UI Updates
+        document.querySelectorAll('#chat-list li').forEach(li => {
+            li.classList.toggle('selected', li.dataset.phone === phone);
+        });
         
-        const contentElement = document.createElement('p');
-        contentElement.textContent = msg.content;
-        const timestampElement = document.createElement('span');
-        timestampElement.classList.add('timestamp');
-        const date = new Date(msg.timestamp);
-        timestampElement.textContent = date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('chat-header-name').textContent = name;
+        document.getElementById('chat-header-phone').textContent = phone;
+        
+        showChatView();
+        updateInterventionButton(isHuman);
+        
+        document.getElementById('messages-container').innerHTML = '<div style="text-align:center; padding: 20px;">Cargando mensajes...</div>';
 
-        if(senderLabel.textContent) messageElement.appendChild(senderLabel);
-        messageElement.appendChild(contentElement);
-        messageElement.appendChild(timestampElement);
-        chatMessages.appendChild(messageElement);
+        // Setup input events (clean old ones by cloning)
+        const sendBtn = document.getElementById('send-message-btn');
+        const newSendBtn = sendBtn.cloneNode(true);
+        sendBtn.parentNode.replaceChild(newSendBtn, sendBtn);
+        newSendBtn.addEventListener('click', () => sendMessage(phone));
+        
+        const inputTxt = document.getElementById('message-input-text');
+        const newInputTxt = inputTxt.cloneNode(true);
+        inputTxt.parentNode.replaceChild(newInputTxt, inputTxt);
+        newInputTxt.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage(phone);
+        });
+
+        // Delete button setup
+        const deleteBtn = document.getElementById('delete-chat-btn');
+        if (deleteBtn) {
+            const newDeleteBtn = deleteBtn.cloneNode(true);
+            deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
+            newDeleteBtn.addEventListener('click', () => deleteConversation(phone));
+        }
+
+        // Fetch
+        await fetchMessages(phone);
+
+        if (messagesInterval) clearInterval(messagesInterval);
+        messagesInterval = setInterval(() => {
+            if (currentPhone === phone) fetchMessages(phone, false); 
+        }, 3000);
     }
 
-    async function loadMessages(phoneNumber) {
-        chatMessages.innerHTML = 'Cargando mensajes...';
+    async function fetchMessages(phone, showLoading = true) {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/messages/${phoneNumber}`);
-            if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
-            const messages = await response.json();
-            chatMessages.innerHTML = '';
-            messages.forEach(renderMessage);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        } catch (error) {
-            logToScreen(`Error en loadMessages: ${error.message}`);
-            chatMessages.innerHTML = `<div class="message client"><p>Error al cargar mensajes. ${error.message}</p></div>`;
+            const res = await fetch(`${API_BASE_URL}/messages/${phone}`);
+            const messages = await res.json();
+            if (currentPhone === phone) {
+                renderMessages(messages);
+            }
+        } catch (e) {
+            console.error('Error fetching messages:', e);
+            if (showLoading) {
+                document.getElementById('messages-container').innerHTML = '<div style="color:red; text-align:center; padding: 20px;">Error al cargar.</div>';
+            }
         }
     }
 
-    async function toggleHumanIntervention(phoneNumber, status) {
+    function renderMessages(messages) {
+        const container = document.getElementById('messages-container');
+        if (!container) return;
+
+        const isScrolledToBottom = container.scrollHeight - container.clientHeight <= container.scrollTop + 50;
+
+        container.innerHTML = messages.map(msg => {
+            const isClient = msg.sender === 'client';
+            const typeClass = isClient ? 'received' : 'sent';
+            
+            let senderLabel = '';
+            if (msg.sender === 'bot') senderLabel = '<span class="msg-sender-label" style="color:#008069;">🤖 Bot</span>';
+            if (msg.sender === 'human') senderLabel = '<span class="msg-sender-label" style="color:#53bdeb;">👤 Tú</span>';
+
+            const d = new Date(msg.timestamp);
+            const timeStr = isNaN(d) ? '' : `<span class="msg-meta">${d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
+
+            return `<div class="message ${typeClass}">${senderLabel}${msg.content}${timeStr}</div>`;
+        }).join('');
+        
+        if (isScrolledToBottom || !container.dataset.loaded) {
+            container.scrollTop = container.scrollHeight;
+            container.dataset.loaded = 'true';
+        }
+    }
+
+    async function sendMessage(phone) {
+        const input = document.getElementById('message-input-text');
+        const text = input.value.trim();
+        if (text === '') return;
+
+        input.value = ''; 
+        input.focus();
+        
+        const container = document.getElementById('messages-container');
+        if (container) {
+            const optimisticMsg = `<div class="message sent" style="opacity: 0.6;"><span class="msg-sender-label" style="color:#53bdeb;">👤 Tú</span>${text}<span class="msg-meta">Enviando...</span></div>`;
+            container.insertAdjacentHTML('beforeend', optimisticMsg);
+            container.scrollTop = container.scrollHeight;
+        }
+
         try {
-            const response = await fetch(`${API_BASE_URL}/api/conversations/${phoneNumber}/intervene`, {
+            await fetch(`${API_BASE_URL}/send_message_from_dashboard`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: status })
+                body: JSON.stringify({ phone_number: phone, content: text })
             });
-            if (!response.ok) throw new Error(`Error del servidor al cambiar estado: ${response.status}`);
-            await response.json(); // Consume response
-            logToScreen(`Intervención humana para ${phoneNumber} cambiada a ${status}.`);
-            await loadConversations(); // Reload conversation list
-            // Re-select the current chat to update its detail view
-            if (currentContact && currentContact.phone_number === phoneNumber) {
-                const updatedContactResponse = await fetch(`${API_BASE_URL}/api/conversations`);
-                const updatedConversations = await updatedContactResponse.json();
-                const updatedContact = updatedConversations.find(c => c.phone_number === phoneNumber);
-                if (updatedContact) {
-                    selectConversation(updatedContact, document.querySelector(`[data-phone-number="${phoneNumber}"]`));
-                }
-            }
-        } catch (error) {
-            logToScreen(`Error en toggleHumanIntervention: ${error.message}`);
+            await fetchMessages(phone, false);
+        } catch (e) {
+            console.error('Error:', e);
+            alert("Error al enviar mensaje.");
+            await fetchMessages(phone, false);
         }
     }
 
-    function selectConversation(contact, conversationElement) {
-        currentContact = contact;
-        const statusText = contact.is_human_intervening ? 'Humano Activo' : 'Bot Activo';
-        const statusClass = contact.is_human_intervening ? 'human-active' : 'bot-active';
-        chatHeader.innerHTML = `
-            <h3>${contact.name || contact.phone_number}</h3>
-            <div class="status-toggle-container">
-                <button id="toggle-human-btn" class="toggle-button ${contact.is_human_intervening ? 'active' : ''}">Humano</button>
-                <button id="toggle-bot-btn" class="toggle-button ${!contact.is_human_intervening ? 'active' : ''}">Bot</button>
-            </div>
-        `;
-        document.getElementById('toggle-human-btn').addEventListener('click', () => toggleHumanIntervention(contact.phone_number, true));
-        document.getElementById('toggle-bot-btn').addEventListener('click', () => toggleHumanIntervention(contact.phone_number, false));
-
-        messageInputContainer.style.display = 'flex';
-        document.querySelectorAll('.conversation-item').forEach(el => el.classList.remove('selected'));
-        conversationElement.classList.add('selected');
-        loadMessages(contact.phone_number);
-    }
-
-    async function loadConversations() {
+    async function toggleHuman(phone, currentlyActive) {
+        const newStatus = !currentlyActive;
+        updateInterventionButton(newStatus);
+        
         try {
-            const response = await fetch(`${API_BASE_URL}/api/conversations`);
-            if (!response.ok) {
-                 throw new Error(`Respuesta del servidor no fue OK: ${response.status}`);
-            }
-            const conversations = await response.json();
-            conversationList.innerHTML = ''; 
-
-            if (conversations.length === 0) {
-                conversationList.innerHTML = '<div class="conversation-item"><p>No hay conversaciones.</p></div>';
-                return;
-            }
-
-            conversations.forEach(conv => {
-                const item = document.createElement('div');
-                item.classList.add('conversation-item');
-                item.dataset.phoneNumber = conv.phone_number;
-                const name = conv.name || conv.phone_number;
-                const lastMessage = conv.last_message_content || 'No hay mensajes.';
-                const status = conv.is_human_intervening ? 'HUMANO' : 'BOT';
-                item.innerHTML = `<h4>${name}</h4><p>${lastMessage}</p><p class="status ${status.toLowerCase()}">Modo: ${status}</p>`;
-                item.addEventListener('click', () => selectConversation(conv, item));
-                conversationList.appendChild(item);
-            });
-        } catch (error) {
-            logToScreen(`Error en loadConversations: ${error.message}`);
-            conversationList.innerHTML = `<div class="conversation-item"><p>Error al cargar chats. Revisa la consola de debug.</p></div>`;
-        }
-    }
-
-    async function sendManualMessage() {
-        const messageText = messageInput.value.trim();
-        if (!messageText || !currentContact) return;
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/send_message_from_dashboard`, {
+            await fetch(`${API_BASE_URL}/intervention`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    phone_number: currentContact.phone_number,
-                    message: messageText
-                })
+                body: JSON.stringify({ phone_number: phone, status: newStatus })
             });
-            if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
-            messageInput.value = '';
-            setTimeout(() => { loadMessages(currentContact.phone_number); }, 500);
-        } catch (error) {
-            logToScreen(`Error en sendManualMessage: ${error.message}`);
+            fetchConversations();
+        } catch (e) {
+            console.error('Error:', e);
+            alert("Error de red.");
+            updateInterventionButton(currentlyActive);
         }
     }
 
-    // --- Event Listeners ---
-    sendButton.addEventListener('click', sendManualMessage);
-    messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendManualMessage(); });
-    testButton.addEventListener('click', runApiTest);
+    // --- Eventos Globales ---
+    chatListElement.addEventListener('click', (event) => {
+        const li = event.target.closest('li');
+        if (li && li.dataset.phone) {
+            loadChatDetail(li.dataset.phone, li.dataset.name, li.dataset.isHuman);
+        }
+    });
 
-    // --- Initial Load ---
-    loadConversations();
+    // --- Init ---
+    fetchConversations();
+    chatsInterval = setInterval(fetchConversations, 5000);
 });

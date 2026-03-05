@@ -2,55 +2,66 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Chat</title>
-    <link rel="stylesheet" href="style.css">
-    <script>
-        // This will be dynamically injected by the Flask server
-        window.API_BASE_URL = '{{ NGROK_URL | tojson }}';
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- Meta tags para evitar caché -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Admin Dashboard - Bots</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css?v=20260305_1">
 </head>
 <body>
     <div class="dashboard-container">
-        <!-- Columna de la lista de conversaciones -->
-        <div class="sidebar">
+        <!-- Sidebar con la lista de bots y chats -->
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <h3>Chats</h3>
+                <h2>Selector de Bot</h2>
+                <select id="bot-selector-main" class="bot-dropdown">
+                    <option value="default">Fundación IDEAR Principal</option>
+                    <!-- Aquí se añadirían más bots en el futuro -->
+                </select>
             </div>
-            <div id="conversation-list" class="conversation-list">
-                <!-- Las conversaciones se cargarán aquí dinámicamente -->
-                <div class="conversation-item">
-                    <p>Cargando chats...</p>
+            <div class="sidebar-chats-header">
+                <h3>Chats Recientes</h3>
+            </div>
+            <ul id="chat-list">
+                <!-- La lista de chats se cargará aquí -->
+            </ul>
+        </aside>
+
+        <!-- Vista del chat -->
+        <main class="chat-view hidden" id="chat-view">
+            <div class="chat-header">
+                <button id="back-btn" class="back-btn hidden"><i class="fas fa-arrow-left"></i></button>
+                <div class="chat-header-info">
+                    <h3 id="chat-header-name">Nombre del contacto</h3>
+                    <span id="chat-header-phone">Teléfono</span>
+                </div>
+                <div class="chat-controls">
+                    <button id="human-toggle">Modo Humano</button>
+                    <button id="delete-chat-btn" title="Borrar Conversación"><i class="fas fa-trash"></i></button>
                 </div>
             </div>
-        </div>
-
-        <!-- Columna de la vista del chat -->
-        <div class="chat-view" id="chat-view">
-            <div id="chat-header" class="chat-header">
-                <h3>Selecciona un chat para empezar</h3>
+            <div class="messages-container" id="messages-container">
+                <!-- Mensajes -->
             </div>
-            <div id="chat-messages" class="chat-messages">
-                <!-- Los mensajes del chat seleccionado aparecerán aquí -->
-                <div class="message received">
-                    <p>Bienvenido al panel de control. Por favor, selecciona una conversación de la izquierda.</p>
-                </div>
+            <div class="message-input">
+                <input type="text" id="message-input-text" placeholder="Escribe tu mensaje..." autocomplete="off">
+                <button id="send-message-btn"><i class="fas fa-paper-plane"></i></button>
             </div>
-            <div id="chat-input-container" class="chat-input-form" style="display: none;">
-                <input type="text" id="message-input" placeholder="Escribe una respuesta manual...">
-                <button id="send-button">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z"></path></svg>
-                </button>
+        </main>
+        
+        <!-- Pantalla de bienvenida en PC cuando no hay chat seleccionado -->
+        <main class="welcome-view" id="welcome-view">
+            <div class="welcome-content">
+                <i class="fas fa-robot"></i>
+                <h2>Selecciona un chat para comenzar</h2>
+                <p>Elige una conversación del panel lateral para ver los mensajes o intervenir.</p>
             </div>
-        </div>
+        </main>
     </div>
 
-    <div id="debug-controls" style="position: fixed; bottom: 10px; right: 10px; background: #fff; padding: 10px; border: 1px solid #ccc; z-index: 100;">
-        <h4>Debug</h4>
-        <button id="test-button">Test API</button>
-        <pre id="log-output" style="max-height: 200px; overflow-y: auto; background: #f0f0f0; padding: 5px; margin-top: 5px;"></pre>
-    </div>
-
-    <script src="script.js"></script>
+    <script src="script.js?v=20260305_1"></script>
 </body>
 </html>
