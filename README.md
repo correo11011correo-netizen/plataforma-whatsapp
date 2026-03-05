@@ -8,8 +8,16 @@ Este repositorio contiene el código de producción del webhook y del motor del 
    Clona el repositorio en tu servidor. El contenido de este repositorio debe ubicarse idealmente en los directorios de trabajo separados:
    - `api-fundacion-idear-webhook/`
    - `bot-manager/bot-engine/`
+   - `bot-manager/dashboard-ui/` (Frontend del Dashboard)
 
-2. **Crear Entornos Virtuales e Instalar Dependencias**
+2. **Desplegar el Frontend del Dashboard**
+   Los archivos estáticos (`index.html`, `style.css`, `script.js`) ubicados en `bot-manager/dashboard-ui/` deben ser alojados en el servidor web. En una configuración típica de Apache, cópialos a `/var/www/fundacionidear/public_html/dashboard/` o al directorio que utilices para servir contenido estático.
+   ```bash
+   sudo mkdir -p /var/www/fundacionidear/public_html/dashboard
+   sudo cp -r bot-manager/dashboard-ui/* /var/www/fundacionidear/public_html/dashboard/
+   ```
+
+3. **Crear Entornos Virtuales e Instalar Dependencias**
    Para cada una de las dos carpetas (`api-fundacion-idear-webhook` y `bot-manager/bot-engine`), crea su propio entorno virtual e instala los requerimientos:
    ```bash
    # En api-fundacion-idear-webhook
