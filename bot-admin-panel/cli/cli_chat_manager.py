@@ -1,53 +1,33 @@
 import os
 import sys
-import sqlite3
 from datetime import datetime
 from dotenv import load_dotenv
 
-# --- Rutas relativas al motor y a la base de datos central ---
-# Este script asume que está en api-webhook/dashboard-cli/
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
-
-# Resolvemos las rutas hacia el bot-engine y la base de datos
-# asumiendo que están en la carpeta bot-manager del repositorio
-BOT_ENGINE_PATH = os.path.join(PROJECT_ROOT, 'bot-manager', 'bot-engine')
-DB_PATH = os.path.join(PROJECT_ROOT, 'bot-manager', 'database', 'bot_dashboard.db')
+# --- Configurar Path para usar la lógica del Bot Engine en vivo ---
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+BOT_ENGINE_PATH = os.path.join(PROJECT_ROOT, 'bot-engine')
 
 if BOT_ENGINE_PATH not in sys.path:
     sys.path.insert(0, BOT_ENGINE_PATH)
 
-# Importamos la configuración y función de envío del motor
-try:
-    from engine import load_config, send_msg
-except ImportError:
-    print("❌ Error: No se pudo importar 'engine.py'.")
-    print(f"Verifica que el archivo exista en: {BOT_ENGINE_PATH}")
-    sys.exit(1)
-
-def get_db_connection():
-    """Establece conexión directa con la base de datos central."""
-    if not os.path.exists(DB_PATH):
-        print(f"❌ Error: No se encontró la base de datos en {DB_PATH}.")
-        sys.exit(1)
-        
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+import db_manager
+from engine import load_config, send_msg
 
 def clear_screen():
+    """Limpia la terminal."""
     os.system('cls' if os.name == 'nt' else 'clear')
 
 def display_main_menu():
+    """Muestra el menú principal."""
     clear_screen()
-    print("=== Terminal Chat Manager (Conexión Directa a DB) ===")
+    print("=== Terminal Chat Manager (Conectado a SQLite DB) ===")
     print("1. Ver Chats Activos")
     print("2. Salir")
     print("=====================================================")
 
 def get_conversations():
-    """Obtiene todas las conversaciones escaneando la base de datos central."""
-    conn = get_db_connection()
+    """Obtiene todas las conversaciones escaneando la base de datos."""
+    conn = db_manager.get_db_connection()
     cursor = conn.cursor()
     query = """
         SELECT
@@ -63,29 +43,35 @@ def get_conversations():
         GROUP BY c.id
         ORDER BY last_message_timestamp DESC;
     """
-    cursor.execute(query)
-    conversations = [dict(row) for row in cursor.fetchall()]
-    conn.close()
-    return conversations
+    try:
+        cursor.execute(query)
+        conversations = [dict(row) for row in cursor.fetchall()]
+        return conversations
+    except Exception as e:
+        print(f"Error reading DB: {e}")
+        return []
+    finally:
+        conn.close()
 
 def display_conversations(conversations):
     clear_screen()
-    print("=== Chats Activos (desde bot_dashboard.db) ===")
+    print("=== Chats Activos (Leídos desde la base de datos) ===")
     if not conversations:
-        print("No hay conversaciones activas.")
+        print("No hay conversaciones activas. El bot aún no ha recibido mensajes.")
         print("---------------------")
         return
 
     for i, conv in enumerate(conversations):
-        status = "HUMANO" if conv['is_human_intervening'] else "BOT"
+        status = "HUMANO (Bot Pausado)" if conv['is_human_intervening'] else "BOT (Activo)"
         last_msg = conv['last_message_content'] if conv['last_message_content'] else "Sin mensajes"
         name = conv['name'] if conv['name'] else conv['phone_number']
-        print(f"{i+1}. {name} ({status}) - Último: '{last_msg[:40]}'")
+        print(f"{i+1}. Número: {name} | Estado actual: {status}")
+        print(f"   Último registro: '{last_msg}'")
     print("---------------------")
 
 def get_messages_for_contact(phone_number):
-    """Lee el historial completo de mensajes directamente desde la DB"""
-    conn = get_db_connection()
+    """Lee el historial completo de mensajes desde la DB"""
+    conn = db_manager.get_db_connection()
     cursor = conn.cursor()
     query = """
         SELECT
@@ -97,53 +83,29 @@ def get_messages_for_contact(phone_number):
         WHERE c.phone_number = ?
         ORDER BY m.timestamp ASC;
     """
-    cursor.execute(query, (phone_number,))
-    messages = [dict(row) for row in cursor.fetchall()]
-    conn.close()
-    return messages
-
-def get_conversation_status(phone_number):
-    """Obtiene el estado de intervención leyendo la tabla conversations."""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT conv.is_human_intervening 
-        FROM conversations conv
-        JOIN contacts c ON conv.contact_id = c.id
-        WHERE c.phone_number = ?
-    """, (phone_number,))
-    row = cursor.fetchone()
-    conn.close()
-    return bool(row['is_human_intervening']) if row else False
-
-def set_human_intervention_status(phone_number, status):
-    """Actualiza el estado de intervención en la base de datos."""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO conversations (contact_id, is_human_intervening)
-        VALUES ((SELECT id FROM contacts WHERE phone_number = ?), ?)
-        ON CONFLICT(contact_id) DO UPDATE SET
-        is_human_intervening = excluded.is_human_intervening,
-        last_updated = CURRENT_TIMESTAMP;
-    """, (phone_number, 1 if status else 0))
-    conn.commit()
-    conn.close()
+    try:
+        cursor.execute(query, (phone_number,))
+        return [dict(row) for row in cursor.fetchall()]
+    except Exception as e:
+        print(f"Error reading messages: {e}")
+        return []
+    finally:
+        conn.close()
 
 def display_chat_history(contact_info, messages):
     clear_screen()
     name = contact_info['name'] if contact_info['name'] else contact_info['phone_number']
-    print(f"=== Chat con {name} ===")
-    print(f"Estado actual: {'HUMANO (Bot pausado)' if contact_info['is_human_intervening'] else 'BOT (Activo)'}")
+    print(f"=== Historial de Chat con {name} ===")
+    print(f"Estado: {'HUMANO (Bot Pausado)' if contact_info['is_human_intervening'] else 'BOT (Activo)'}")
     print("---------------------------------")
     for msg in messages:
-        timestamp = msg['timestamp']
-        if '.' in timestamp:
-            timestamp = timestamp.split('.')[0]
         try:
-            timestamp = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S').strftime('%H:%M:%S')
+            timestamp = datetime.strptime(msg['timestamp'], '%Y-%m-%d %H:%M:%S.%f').strftime('%H:%M:%S')
         except ValueError:
-            pass
+            try:
+                timestamp = datetime.strptime(msg['timestamp'], '%Y-%m-%d %H:%M:%S').strftime('%H:%M:%S')
+            except ValueError:
+                timestamp = msg['timestamp']
         
         sender_label = "Tú (Humano)" if msg['sender'] == 'human' else "Bot" if msg['sender'] == 'bot' else "Cliente"
         print(f"[{timestamp}] {sender_label}: {msg['content']}")
@@ -154,16 +116,15 @@ def manage_chat(cfg, contact_info):
         phone_number = contact_info['phone_number']
         messages = get_messages_for_contact(phone_number)
         
-        # Refrescar estado actual directamente de DB
-        is_intervening = get_conversation_status(phone_number)
+        # Leer estado actual de intervención desde BD
+        is_intervening = db_manager.get_conversation_status(phone_number)
         contact_info['is_human_intervening'] = is_intervening
 
         display_chat_history(contact_info, messages)
 
-        print("
-Opciones:")
+        print("\nOpciones:")
         print("1. Responder mensaje")
-        print("2. Cambiar estado de intervención (Pausar/Reanudar Bot)")
+        print("2. Alternar estado (Pausar/Reanudar Bot para este usuario)")
         print("3. Actualizar pantalla de Chat")
         print("4. Volver al menú principal")
 
@@ -173,11 +134,12 @@ Opciones:")
             message = input("Escribe tu mensaje: ")
             if message.strip():
                 print("Enviando mensaje vía Meta API...")
-                # send_msg lo registra internamente en DB como 'bot' 
+                
+                # Enviar el mensaje usando las credenciales del bot
                 send_msg(cfg, phone_number, message)
                 
-                # Nosotros actualizamos directamente la DB para que figure como 'human'
-                conn = get_db_connection()
+                # Forzar en BD que el registro sea 'human'
+                conn = db_manager.get_db_connection()
                 cursor = conn.cursor()
                 cursor.execute("""
                     UPDATE messages 
@@ -188,13 +150,14 @@ Opciones:")
                 """, (phone_number,))
                 conn.commit()
                 conn.close()
-                print("✅ Mensaje enviado exitosamente.")
+                    
+                print("✅ Mensaje enviado y registrado en la base de datos como humano.")
             input("Presiona Enter para continuar...")
             
         elif choice == '2':
             new_status = not is_intervening
-            set_human_intervention_status(phone_number, new_status)
-            print(f"✅ Estado actualizado a: {'HUMANO (Pausado)' if new_status else 'BOT (Activo)'}")
+            db_manager.set_human_intervention_status(phone_number, new_status)
+            print(f"✅ Estado de intervención cambiado a: {'Pausado (Humano)' if new_status else 'Activo (Bot)'}")
             input("Presiona Enter para continuar...")
             
         elif choice == '3':
@@ -207,36 +170,34 @@ Opciones:")
             input("Presiona Enter para continuar...")
 
 def main():
-    # Cargar el archivo .env desde el motor
+    # Cargar .env desde el motor
     env_path = os.path.join(BOT_ENGINE_PATH, '.env')
-    if os.path.exists(env_path):
-        load_dotenv(dotenv_path=env_path)
-    else:
-        print(f"⚠️  Advertencia: No se encontró .env en {env_path}. Si las variables no están en el entorno, el bot fallará al enviar mensajes.")
+    load_dotenv(dotenv_path=env_path)
     
+    # Cargar Configuración del bot engine
     cfg = load_config()
 
     while True:
         display_main_menu()
-        choice = input("Elige una opción: ")
+        choice = input("Elige una opción (1 o 2): ")
 
         if choice == '1':
             conversations = get_conversations()
             if not conversations:
-                print("
-No hay conversaciones activas en la base de datos.")
+                print("\nNo hay conversaciones activas en la base de datos.")
+                print("Asegúrate de que alguien haya enviado un mensaje al bot.")
                 input("Presiona Enter para volver.")
                 continue
             
             display_conversations(conversations)
-            chat_choice = input("Elige el número del chat (o 'q' para volver): ")
+            chat_choice = input("Elige el número del chat para gestionar (o 'q' para volver): ")
             if chat_choice.lower() == 'q':
                 continue
             
             try:
                 chat_index = int(chat_choice) - 1
                 if 0 <= chat_index < len(conversations):
-                    manage_chat(cfg, dict(conversations[chat_index]))
+                    manage_chat(cfg, conversations[chat_index])
                 else:
                     print("Número de chat inválido.")
                     input("Presiona Enter para continuar...")
@@ -245,7 +206,8 @@ No hay conversaciones activas en la base de datos.")
                 input("Presiona Enter para continuar...")
 
         elif choice == '2':
-            sys.exit("Saliendo del Chat Manager.")
+            print("Saliendo del Chat Manager.")
+            sys.exit(0)
         else:
             print("Opción inválida.")
             input("Presiona Enter para continuar...")
