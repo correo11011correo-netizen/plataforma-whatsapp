@@ -9,6 +9,63 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveSettingsBtn = document.getElementById('save-settings-btn');
     const settingsFeedback = document.getElementById('settings-feedback');
 
+    // --- Funciones Textos Globales ---
+    async function loadSettings() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/settings`);
+            if (!response.ok) throw new Error(`Error: ${response.status}`);
+            const settings = await response.json();
+            
+            settingsWelcome.value = settings.welcome_message || '';
+            settingsMainMenu.value = settings.main_menu_text || '';
+            settingsFallback.value = settings.fallback_message || '';
+        } catch (error) {
+            showSettingsFeedback('Error al cargar textos.', 'error');
+            console.error(error);
+        }
+    }
+
+    async function saveSettings() {
+        saveSettingsBtn.disabled = true;
+        saveSettingsBtn.textContent = 'Guardando...';
+
+        const data = {
+            welcome_message: settingsWelcome.value,
+            main_menu_text: settingsMainMenu.value,
+            fallback_message: settingsFallback.value
+        };
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/settings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) throw new Error(`Error: ${response.status}`);
+            showSettingsFeedback('Textos guardados exitosamente.', 'success');
+        } catch (error) {
+            showSettingsFeedback('Error al guardar textos.', 'error');
+            console.error(error);
+        } finally {
+            saveSettingsBtn.disabled = false;
+            saveSettingsBtn.textContent = 'Guardar Textos';
+        }
+    }
+
+    function showSettingsFeedback(message, type) {
+        settingsFeedback.textContent = message;
+        settingsFeedback.className = `feedback-msg ${type}`;
+        settingsFeedback.style.display = 'block';
+        setTimeout(() => {
+            settingsFeedback.style.display = 'none';
+        }, 3000);
+    }
+
+    if (saveSettingsBtn) {
+        saveSettingsBtn.addEventListener('click', saveSettings);
+    }
+
     // --- Constructor de Menús Dinámicos (Inline Builder) ---
     const menusContainer = document.getElementById('menus-container');
     const addMenuBtn = document.getElementById('add-menu-btn');
