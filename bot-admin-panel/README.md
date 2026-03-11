@@ -2,11 +2,14 @@
 
 Este directorio contiene las herramientas, APIs y la interfaz de usuario para la **administración centralizada de todos los bots**. Se concibe como un proyecto independiente dentro del repositorio para facilitar su escalabilidad futura, ya que más adelante administrará múltiples bots y se le agregarán más opciones.
 
-## Estructura del Proyecto
+## Estructura del Proyecto (Arquitectura de Panel Doble)
 
-- `frontend/`: Contiene la interfaz gráfica (HTML, CSS, JS) del Dashboard de Administración. Se conecta al backend a través de la API para visualizar conversaciones, gestionar el modo "Bot" vs "Humano", y borrar chats.
-- `backend/`: Código de la API (por ejemplo `dashboard_api.py`) dedicada exclusivamente a proveer datos a los paneles de control. *Actualmente, parte de la funcionalidad API la sirve directamente el `bot-engine`, pero aquí se alojarán los microservicios administrativos.*
-- `cli/`: Herramientas de terminal (línea de comandos) para administración directa del servidor, bases de datos de los bots y utilidades puente (webhook bridge). Útil para operaciones de soporte técnico y mantenimiento manual.
+El sistema de administración visual está dividido en dos aplicaciones Frontend separadas para mayor seguridad y enfoque de las tareas:
+
+- `frontend/`: Contiene la interfaz gráfica (HTML, CSS, JS) del **Dashboard de Conversaciones**. Se sirve estáticamente vía Apache (`fundacionidear.com/dashboard/`). Permite a los agentes humanos ver chats en vivo, tomar el control de una conversación, enviar mensajes e imágenes, y borrar chats de forma segura mediante peticiones `POST`.
+- `frontend-settings/`: Contiene el **Constructor Dinámico de Menús en Línea**. Esta interfaz avanzada se sirve desde el backend (`api.fundacionidear.com/dashboard`). Permite configurar los textos globales, crear categorías, agregar opciones en línea con numeración automática, y enlazar submenús visualmente sin tocar la base de datos de forma directa.
+- `backend/`: Código de la API heredada (por ejemplo `dashboard_api.py`). *Actualmente, la funcionalidad API la sirve directamente el `bot-engine` (puerto 5001).*
+- `cli/`: Herramientas de terminal (línea de comandos) para administración directa del servidor. Útil para operaciones de soporte técnico y mantenimiento manual.
 
 ## ¿Cómo interactúa el Frontend con la Base de Datos?
 

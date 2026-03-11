@@ -20,6 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
         chatViewElement.classList.remove('hidden');
         if (window.innerWidth <= 768) {
             sidebarElement.classList.add('hidden-mobile');
+            backBtn.classList.remove('hidden');
+        } else {
+            backBtn.classList.add('hidden');
         }
     }
 
@@ -31,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
             welcomeViewElement.classList.remove('hidden');
             chatViewElement.classList.add('hidden');
         }
+        backBtn.classList.add('hidden');
         currentPhone = null;
         if(messagesInterval) clearInterval(messagesInterval);
         document.querySelectorAll('#chat-list li').forEach(el => el.classList.remove('selected'));
@@ -166,12 +170,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (messagesInterval) clearInterval(messagesInterval);
         messagesInterval = setInterval(() => {
-            if (currentPhone === phone) fetchMessages(phone, false); 
+            if (currentPhone === phone) fetchMessages(phone, false);
         }, 3000);
-    }
+        }
 
-    async function fetchMessages(phone, showLoading = true) {
-        try {
+        async function deleteConversation(phone) {
+            if (!confirm('¿Estás seguro de que deseas borrar toda la conversación con ' + phone + '? Esta acción no se puede deshacer.')) return;
+
+            try {
+                console.log("Iniciando peticion POST a:", `${API_BASE_URL}/conversations/delete`);
+                const res = await fetch(`${API_BASE_URL}/conversations/delete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ phone_number: phone })
+                });
+
+                console.log("Status de la respuesta:", res.status);
+
+                if (res.ok) {
+                    console.log("Borrado exitoso.");
+                    if (currentPhone === phone) {
+                        showSidebar();
+                    }
+                    fetchConversations();
+                } else {
+                    // Leer el texto exacto del error devuelto por el servidor
+                    const errorText = await res.text();
+                    console.error("Fallo al borrar. Respuesta cruda del servidor:", errorText);
+                    alert(`Error ${res.status} al borrar la conversación.\nDetalle: ${errorText.substring(0, 200)}`);
+                }
+            } catch (error) {
+                console.error('Error de red CRITICO al intentar borrar:', error);
+                alert(`Error de conexión al intentar comunicarse con el servidor:\n${error.message}`);
+            }
+        }        async function fetchMessages(phone, showLoading = true) {        try {
             const res = await fetch(`${API_BASE_URL}/messages/${phone}`);
             const messages = await res.json();
             if (currentPhone === phone) {

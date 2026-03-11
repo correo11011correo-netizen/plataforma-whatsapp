@@ -119,7 +119,178 @@ def set_human_intervention_status(phone_number, status):
             conn.close()
 
 
+def get_bot_setting(key, default_value=""):
+    """Retrieves a setting from the bot_settings table."""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT value FROM bot_settings WHERE key = ?", (key,))
+        result = cursor.fetchone()
+        if result:
+            return result['value']
+        return default_value
+    except sqlite3.Error as e:
+        print(f"Database error in get_bot_setting: {e}")
+        return default_value
+    finally:
+        if conn:
+            conn.close()
+
+def update_bot_setting(key, value):
+    """Updates a setting in the bot_settings table."""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO bot_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            (key, value)
+        )
+        conn.commit()
+        return True
+    except sqlite3.Error as e:
+        print(f"Database error in update_bot_setting: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+def get_all_bot_settings():
+    """Retrieves all settings from the bot_settings table as a dictionary."""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT key, value FROM bot_settings")
+        results = cursor.fetchall()
+        return {row['key']: row['value'] for row in results}
+    except sqlite3.Error as e:
+        print(f"Database error in get_all_bot_settings: {e}")
+        return {}
+    finally:
+        if conn:
+            conn.close()
+
+
+
+def get_all_menus():
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM menus")
+        menus = [dict(row) for row in cursor.fetchall()]
+        for menu in menus:
+            cursor.execute("SELECT * FROM menu_options WHERE menu_id = ?", (menu['id'],))
+            menu['options'] = [dict(row) for row in cursor.fetchall()]
+        return menus
+    except sqlite3.Error as e:
+        print(f"Database error in get_all_menus: {e}")
+        return []
+    finally:
+        if conn:
+            conn.close()
+
+def create_menu(name, description):
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO menus (name, description) VALUES (?, ?)", (name, description))
+        conn.commit()
+        return cursor.lastrowid
+    except sqlite3.Error as e:
+        print(f"Database error in create_menu: {e}")
+        return None
+    finally:
+        if conn:
+            conn.close()
+
+def delete_menu(menu_id):
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM menu_options WHERE menu_id = ?", (menu_id,))
+        cursor.execute("DELETE FROM menus WHERE id = ?", (menu_id,))
+        conn.commit()
+        return True
+    except sqlite3.Error as e:
+        print(f"Database error in delete_menu: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+def create_menu_option(menu_id, option_key, option_text, action_type, action_payload):
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO menu_options (menu_id, option_key, option_text, action_type, action_payload) VALUES (?, ?, ?, ?, ?)",
+            (menu_id, option_key, option_text, action_type, action_payload)
+        )
+        conn.commit()
+        return cursor.lastrowid
+    except sqlite3.Error as e:
+        print(f"Database error in create_menu_option: {e}")
+        return None
+    finally:
+        if conn:
+            conn.close()
+
+def delete_menu_option(option_id):
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM menu_options WHERE id = ?", (option_id,))
+        conn.commit()
+        return True
+    except sqlite3.Error as e:
+        print(f"Database error in delete_menu_option: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+def delete_conversation(phone_number):
+    """
+    Deletes a conversation and all its messages based on the phone number.
+    Returns True if successful, False otherwise.
+    """
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Obtener el contact_id primero
+        cursor.execute("SELECT id FROM contacts WHERE phone_number = ?", (phone_number,))
+        contact_row = cursor.fetchone()
+
+        if contact_row:
+            contact_id = contact_row['id']
+            # Borrar mensajes primero por la llave foránea
+            cursor.execute("DELETE FROM messages WHERE contact_id = ?", (contact_id,))
+            # Borrar la conversación
+            cursor.execute("DELETE FROM conversations WHERE contact_id = ?", (contact_id,))
+            conn.commit()
+            return True
+        else:
+            print(f"No se encontró el contacto {phone_number} para borrar.")
+            return False
+
+    except sqlite3.Error as e:
+        print(f"Database error deleting conversation {phone_number}: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()
+
 if __name__ == '__main__':
+
     # Example usage:
     # Ensure the bot-dashboard/backend directory exists and run the Node.js backend to create the DB first
     print(f"Database path: {DB_PATH}")

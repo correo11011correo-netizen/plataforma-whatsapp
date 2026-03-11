@@ -9,7 +9,7 @@
     <meta http-equiv="Expires" content="0">
     <title>Admin Dashboard - Bots</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=20260305_1">
+    <link rel="stylesheet" href="style.css?v=20260310_1">
 </head>
 <body>
     <div class="dashboard-container">
@@ -47,6 +47,8 @@
                 <!-- Mensajes -->
             </div>
             <div class="message-input">
+                <input type="file" id="media-upload-input" accept="image/*,video/*,application/pdf" style="display: none;">
+                <button id="attach-btn" title="Adjuntar Archivo"><i class="fas fa-paperclip"></i></button>
                 <input type="text" id="message-input-text" placeholder="Escribe tu mensaje..." autocomplete="off">
                 <button id="send-message-btn"><i class="fas fa-paper-plane"></i></button>
             </div>
@@ -62,6 +64,6 @@
         </main>
     </div>
 
-    <script src="script.js?v=20260305_1"></script>
+    <script src="script.js?v=20260310_LOGS"></script>
 </body>
 </html>

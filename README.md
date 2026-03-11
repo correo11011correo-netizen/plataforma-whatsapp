@@ -10,12 +10,25 @@ Este repositorio contiene el código de producción del webhook y del motor del 
    - `bot-manager/bot-engine/`
    - `bot-admin-panel/` (Proyecto independiente de administración centralizada de bots)
 
-2. **Desplegar el Frontend del Dashboard**
+2. **Desplegar los Dashboards (Panel de Control)**
+   El sistema ahora cuenta con una arquitectura de panel doble:
+   
+   **A. Panel de Conversaciones (Chats en vivo):**
    Los archivos estáticos (`index.html`, `style.css`, `script.js`) ubicados en `bot-admin-panel/frontend/` deben ser alojados en el servidor web. En una configuración típica de Apache, cópialos a `/var/www/fundacionidear/public_html/dashboard/` o al directorio que utilices para servir contenido estático.
    ```bash
    sudo mkdir -p /var/www/fundacionidear/public_html/dashboard
    sudo cp -r bot-admin-panel/frontend/* /var/www/fundacionidear/public_html/dashboard/
    ```
+   *Acceso público:* `https://fundacionidear.com/dashboard/`
+
+   **B. Panel de Configuración del Bot (Editor de Menús en Línea):**
+   Los archivos del constructor de menús ubicados en `bot-admin-panel/frontend-settings/` deben moverse dentro del proyecto Flask del webhook para ser servidos de forma protegida bajo el dominio de la API.
+   ```bash
+   sudo cp bot-admin-panel/frontend-settings/index.html api-fundacion-idear-webhook/app/templates/dashboard.html
+   sudo cp bot-admin-panel/frontend-settings/script.js api-fundacion-idear-webhook/app/static/script.js
+   sudo cp bot-admin-panel/frontend-settings/style.css api-fundacion-idear-webhook/app/static/style.css
+   ```
+   *Acceso público:* `https://api.fundacionidear.com/dashboard`
 
 3. **Crear Entornos Virtuales e Instalar Dependencias**
    Para cada una de las dos carpetas (`api-fundacion-idear-webhook` y `bot-manager/bot-engine`), crea su propio entorno virtual e instala los requerimientos:
