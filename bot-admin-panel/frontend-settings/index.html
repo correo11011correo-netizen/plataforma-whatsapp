@@ -10,14 +10,16 @@
     <div class="app-container">
         <!-- Barra de Navegación -->
         <nav class="top-nav">
-            <h2>🤖 Editor de Opciones del Bot</h2>
+            <h2>🤖 Editor y Gestor del Bot</h2>
             <div class="nav-tabs">
-                <span class="tab-btn active">⚙️ Administración de Menús y Mensajes</span>
+                <span class="tab-btn active" id="tab-flows" onclick="switchTab('flows')">⚙️ Flujos y Mensajes</span>
+                <span class="tab-btn" id="tab-inventory" onclick="switchTab('inventory')">📦 Inventario y Stock</span>
             </div>
         </nav>
 
         <div class="main-content" style="overflow-y: auto;">
-            <div class="settings-container" style="margin: 20px auto; display: block;">
+            <!-- VISTA DE FLUJOS -->
+            <div id="view-flows" class="settings-container" style="margin: 20px auto; display: block;">
                 <!-- SECCIÓN: Textos Globales -->
                 <div class="settings-section">
                     <div class="settings-header">
@@ -44,21 +46,106 @@
                     <div id="settings-feedback" class="feedback-msg"></div>
                 </div>
 
-                <!-- SECCIÓN: Menús Dinámicos -->
+                <!-- SECCIÓN: Menús Dinámicos (SPLIT VIEW) -->
                 <div class="settings-section" style="margin-top: 30px;">
-                    <div class="settings-header">
-                        <h3>📂 Constructor de Menús y Opciones</h3>
-                        <button id="add-menu-btn" class="save-btn" style="background-color: #007bff;">+ Nuevo Menú / Categoría</button>
+                    <div class="settings-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px;">
+                        <h3 style="margin: 0; color: #1e293b; font-size: 1.5em; display: flex; align-items: center; gap: 10px;">
+                            <svg width="24" height="24" fill="#3b82f6" viewBox="0 0 16 16"><path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zm8 0A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm-8 8A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm8 0A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3z"/></svg>
+                            Constructor de Flujos
+                        </h3>
+                        <button id="add-menu-btn" class="save-btn" style="background-color: #3b82f6; border: none; border-radius: 8px; padding: 10px 20px; font-weight: 600; font-size: 1em; display: flex; align-items: center; gap: 8px; transition: background 0.2s; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);">
+                            <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/></svg>
+                            Nuevo Flujo
+                        </button>
                     </div>
-                    <div class="settings-body" id="menus-container">
-                        <!-- Aquí se renderizarán los menús como bloques interactivos -->
-                        <p>Cargando constructor...</p>
+                    
+                    <!-- Contenedor Split View -->
+                    <div style="display: flex; gap: 20px; align-items: flex-start;">
+                        <!-- Columna Izquierda: Lista de Menús -->
+                        <div id="menus-sidebar" style="flex: 1; min-width: 250px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; max-height: 600px; overflow-y: auto;">
+                            <h4 style="margin-top: 0; color: #475569; font-size: 1.1em; border-bottom: 1px solid #cbd5e1; padding-bottom: 10px;">Tus Flujos</h4>
+                            <div id="menus-list-container">
+                                <!-- Lista inyectada por JS -->
+                            </div>
+                        </div>
+                        
+                        <!-- Columna Derecha: Detalle del Menú Seleccionado -->
+                        <div id="menu-detail-container" style="flex: 2; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; min-height: 400px;">
+                            <div style="text-align: center; color: #94a3b8; margin-top: 100px;">
+                                <svg width="48" height="48" fill="currentColor" viewBox="0 0 16 16" style="margin-bottom: 15px;"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M4.285 12.433a.5.5 0 0 0 .683-.183A3.498 3.498 0 0 1 8 10.5c1.295 0 2.426.703 3.032 1.75a.5.5 0 0 0 .866-.5A4.498 4.498 0 0 0 8 9.5a4.5 4.5 0 0 0-3.898 2.25.5.5 0 0 0 .183.683zM7 6.5C7 7.328 6.552 8 6 8s-1-.672-1-1.5S5.448 5 6 5s1 .672 1 1.5zm4 0c0 .828-.448 1.5-1 1.5s-1-.672-1-1.5S9.448 5 10 5s1 .672 1 1.5z"/></svg>
+                                <h3>Selecciona un flujo a la izquierda</h3>
+                                <p>O crea uno nuevo para empezar a editar sus opciones.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VISTA DE INVENTARIO -->
+            <div id="view-inventory" class="settings-container" style="margin: 20px auto; display: none;">
+                <div class="settings-section">
+                    <div class="settings-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px;">
+                        <h3 style="margin: 0; color: #1e293b; font-size: 1.5em; display: flex; align-items: center; gap: 10px;">
+                            <svg width="24" height="24" fill="#10b981" viewBox="0 0 16 16"><path d="M8.186 1.113a.5.5 0 0 0-.372 0L1.846 3.5 8 5.961 14.154 3.5 8.186 1.113zM15 4.239l-6.5 2.6v7.922l6.5-2.6V4.24zM7.5 14.762V6.838L1 4.239v7.923l6.5 2.6zM7.443.184a1.5 1.5 0 0 1 1.114 0l7.129 2.852A.5.5 0 0 1 16 3.5v8.662a1 1 0 0 1-.629.928l-7.185 2.874a.5.5 0 0 1-.372 0L.63 13.09a1 1 0 0 1-.63-.928V3.5a.5.5 0 0 1 .314-.464L7.443.184z"/></svg>
+                            Gestión de Inventario y Servicios
+                        </h3>
+                        <button id="add-inventory-btn" class="save-btn" style="background-color: #10b981; border: none; border-radius: 8px; padding: 10px 20px; font-weight: 600; font-size: 1em; display: flex; align-items: center; gap: 8px; transition: background 0.2s; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);">
+                            <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/></svg>
+                            Añadir Producto/Servicio
+                        </button>
+                    </div>
+
+                    <!-- Buscador -->
+                    <div style="margin-bottom: 20px; position: relative;">
+                        <input type="text" id="inventory-search" placeholder="Buscar por marca, modelo o reparación..." style="width: 100%; padding: 12px 15px 12px 40px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1em; outline: none; box-sizing: border-box;" onkeyup="filterInventory()">
+                        <svg width="18" height="18" fill="#94a3b8" viewBox="0 0 16 16" style="position: absolute; left: 15px; top: 14px;"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>
+                    </div>
+
+                    <!-- Contenedor Tarjetas Inventario -->
+                    <div id="inventory-list-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+                        <!-- Tarjetas inyectadas por JS -->
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Modal para Formulario de Inventario -->
+        <div id="inventory-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+            <div style="background: #fff; padding: 25px; border-radius: 12px; width: 90%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+                <h3 id="inventory-modal-title" style="margin-top: 0; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">Añadir al Inventario</h3>
+                <form id="inventory-form">
+                    <input type="hidden" id="inv-id">
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; color: #475569; font-weight: 600;">Marca / Categoría:</label>
+                        <input type="text" id="inv-marca" required style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; color: #475569; font-weight: 600;">Modelo (Opcional):</label>
+                        <input type="text" id="inv-modelo" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; color: #475569; font-weight: 600;">Servicio / Reparación / Producto:</label>
+                        <input type="text" id="inv-reparacion" required style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+                    </div>
+                    <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                        <div style="flex: 1;">
+                            <label style="display: block; margin-bottom: 5px; color: #475569; font-weight: 600;">Precio ($):</label>
+                            <input type="number" id="inv-precio" required step="0.01" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="display: block; margin-bottom: 5px; color: #475569; font-weight: 600;">Stock disponible:</label>
+                            <input type="number" id="inv-stock" value="0" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                        <button type="button" onclick="closeInventoryModal()" style="padding: 10px 15px; background: #f1f5f9; color: #475569; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Cancelar</button>
+                        <button type="submit" style="padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
-    <script src="/dashboard/script.js?v=20260310_FINAL"></script>
+    <script src="/dashboard/script.js?v=20260310_FINAL_MEDIA"></script>
 </body>
 </html>
