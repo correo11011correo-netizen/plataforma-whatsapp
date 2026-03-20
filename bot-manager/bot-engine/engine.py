@@ -105,11 +105,16 @@ def process_message(cfg, data):
         db_manager.add_message(sender, 'client', text_raw)
 
         # -- COMPROBACIÓN MODO HUMANO --
-        if text == "!humano":
+        if text in ["!humano", "humano", "asesor", "contacto", "hablar con alguien", "hablar con asesor"]:
             db_manager.set_human_intervention_status(sender, True)
-            response_body = "🤖 Pausando respuestas automáticas. Un humano tomará el control. 🙋"
+            response_body = "🤖 Te estoy transfiriendo con un asesor. Te responderemos por aquí a la brevedad. 🙋"
             db_manager.add_message(sender, 'bot', response_body)
             send_msg(cfg, sender, response_body)
+            try:
+                # Notificar al admin inmediatamente
+                send_msg(cfg, "5493765245980", f"🚨 *¡ATENCIÓN!* 🚨\nEl número {sender} ha solicitado hablar con un asesor.", sender_type='bot')
+            except Exception:
+                pass
             continue
         if text == "!bot":
             db_manager.set_human_intervention_status(sender, False)
@@ -187,8 +192,9 @@ def process_message(cfg, data):
                 payload = chosen_opt['action_payload']
                 
                 if action == 'text':
-                    db_manager.add_message(sender, 'bot', payload)
-                    send_msg(cfg, sender, payload)
+                    msg = f"{payload}\n\n━━━━━━━━━━━━━━\n👉 _Escribe *asesor* para hablar con nosotros, o *volver* al menú_"
+                    db_manager.add_message(sender, 'bot', msg)
+                    send_msg(cfg, sender, msg)
                 elif action == 'image' or action == 'document':
                     url_media = f"https://graph.facebook.com/v19.0/{cfg['phone_id']}/messages"
                     headers_media = {"Authorization": f"Bearer {cfg['token']}", "Content-Type": "application/json"}
@@ -222,7 +228,7 @@ def process_message(cfg, data):
                             msg += f"   • Precio: *${item['precio']}*\n"
                             if item['stock'] > 0: msg += f"   • Stock: {item['stock']} un.\n"
                             msg += "\n"
-                        msg += "▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n👉 _Escribe 'volver' para regresar_"
+                        msg += "▬▬▬▬▬▬▬▬▬▬▬▬▬▬\n👉 _Escribe *asesor* para comprar, o *volver* al menú_"
                     db_manager.add_message(sender, 'bot', msg)
                     send_msg(cfg, sender, msg)
                 elif action == 'submenu':
