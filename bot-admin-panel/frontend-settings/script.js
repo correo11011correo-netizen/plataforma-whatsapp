@@ -109,6 +109,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     currentSelectedMenuId = menu.id;
                     loadMenus(); // Re-render sidebar colors
                     showMenuDetail(menu);
+                    if (window.innerWidth <= 768) {
+                        document.getElementById('menus-sidebar').classList.add('hide-on-mobile');
+                        document.getElementById('menu-detail-container').classList.remove('hide-on-mobile');
+                    }
                 };
                 
                 // Add hover effect via JS
@@ -128,10 +132,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadMenus();
             }
 
+            // Mobile-first check: if we are on mobile, hide details initially unless forced.
+            if (window.innerWidth <= 768 && !document.getElementById('menus-sidebar').classList.contains('hide-on-mobile')) {
+                document.getElementById('menu-detail-container').classList.add('hide-on-mobile');
+            }
+
         } catch (error) {
             menusSidebar.innerHTML = '<p style="color:red; font-weight:bold;">Error al cargar flujos.</p>';
         }
     }
+
+    window.showMobileSidebar = function() {
+        document.getElementById('menus-sidebar').classList.remove('hide-on-mobile');
+        document.getElementById('menu-detail-container').classList.add('hide-on-mobile');
+    };
 
     function showMenuDetail(menu) {
         let nextKey = 1;
@@ -174,8 +188,12 @@ document.addEventListener('DOMContentLoaded', () => {
         let submenuOptions = globalMenusList.map(m => `<option value="${m.name}">${m.name}</option>`).join('');
 
         menuDetail.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px;">
-                <div>
+            <button class="mobile-back-btn" onclick="showMobileSidebar()" style="background: #e2e8f0; color: #334155; border: none; padding: 10px 15px; border-radius: 6px; margin-bottom: 20px; font-weight: 600; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/></svg>
+                Volver a la Lista de Flujos
+            </button>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                <div style="flex: 1; min-width: 200px;">
                     <h3 style="margin: 0; color: #0f172a; font-size: 1.6em; display: flex; align-items: center; gap: 8px;">
                         Flujo: <span style="color: #3b82f6;">${menu.name}</span>
                     </h3>

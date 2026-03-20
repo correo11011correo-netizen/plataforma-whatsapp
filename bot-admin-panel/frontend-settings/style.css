@@ -379,6 +379,13 @@ body {
         white-space: nowrap;
         -webkit-overflow-scrolling: touch;
     }
+    #menus-sidebar, #menu-detail-container {
+        flex: 1 1 100% !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
     .modal-content {
         width: 90vw;
         padding: 20px;
@@ -393,4 +400,13 @@ body {
         width: 100%;
         padding: 12px;
     }
+    
+    /* Mobile Master-Detail Toggle */
+    .mobile-back-btn {
+        display: inline-block !important;
+    }
+    .hide-on-mobile {
+        display: none !important;
+    }
 }
+.mobile-back-btn { display: none; }
