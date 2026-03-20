@@ -4,7 +4,7 @@ import requests
 import sqlite3
 from flask import Flask, request, jsonify, render_template, send_from_directory
 from dotenv import load_dotenv
-from engine import setup_logging, load_submenu_flows, load_config, process_message, send_msg
+from engine import setup_logging, load_submenu_flows, load_config, process_message, send_msg, upload_media, send_media_msg
 from flows.messenger import handle_messenger
 import db_manager
 
@@ -179,6 +179,43 @@ def send_message_from_dashboard():
         return jsonify({"status": "success", "message": "Enviado correctamente."}), 200
     except Exception as e:
         print(f"Error sending message from dashboard: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/send_media_from_dashboard", methods=["POST"])
+def send_media_from_dashboard():
+    cfg = app.config["cfg"]
+    
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+        
+    file = request.files['file']
+    phone_number = request.form.get('phone_number')
+    caption = request.form.get('caption', '')
+    
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+        
+    if not phone_number:
+        return jsonify({"error": "Phone number is required"}), 400
+
+    try:
+        # Subir archivo a Meta
+        media_id = upload_media(cfg, file.read(), file.filename, file.content_type)
+        
+        if not media_id:
+            return jsonify({"error": "No se pudo subir el archivo a Meta."}), 500
+            
+        # Enviar archivo al usuario
+        success = send_media_msg(cfg, phone_number, media_id, file.content_type, filename=file.filename, caption=caption, sender_type='human')
+        
+        if success:
+            return jsonify({"status": "success", "message": "Archivo enviado correctamente."}), 200
+        else:
+            return jsonify({"error": "Fallo al enviar el archivo adjunto al chat."}), 500
+            
+    except Exception as e:
+        import traceback
+        logging.error(f"Error sending media from dashboard: {traceback.format_exc()}")
         return jsonify({"error": str(e)}), 500
 
 # --- NUEVA RUTA DE API PARA INTERVENCIÓN ---

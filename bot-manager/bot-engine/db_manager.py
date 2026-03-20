@@ -289,6 +289,71 @@ def delete_conversation(phone_number):
         if conn:
             conn.close()
 
+def get_all_inventory():
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM inventory WHERE is_active = 1")
+        return [dict(row) for row in cursor.fetchall()]
+    except sqlite3.Error as e:
+        print(f"Database error in get_all_inventory: {e}")
+        return []
+    finally:
+        if conn:
+            conn.close()
+
+def add_inventory_item(marca, modelo, reparacion, precio, stock=0):
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO inventory (marca, modelo, reparacion, precio, stock) VALUES (?, ?, ?, ?, ?)",
+            (marca, modelo, reparacion, precio, stock)
+        )
+        conn.commit()
+        return cursor.lastrowid
+    except sqlite3.Error as e:
+        print(f"Database error in add_inventory_item: {e}")
+        return None
+    finally:
+        if conn:
+            conn.close()
+
+def update_inventory_item(item_id, marca, modelo, reparacion, precio, stock):
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE inventory SET marca=?, modelo=?, reparacion=?, precio=?, stock=? WHERE id=?",
+            (marca, modelo, reparacion, precio, stock, item_id)
+        )
+        conn.commit()
+        return True
+    except sqlite3.Error as e:
+        print(f"Database error in update_inventory_item: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+def delete_inventory_item(item_id):
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM inventory WHERE id = ?", (item_id,))
+        conn.commit()
+        return True
+    except sqlite3.Error as e:
+        print(f"Database error in delete_inventory_item: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()
+
 if __name__ == '__main__':
 
     # Example usage:

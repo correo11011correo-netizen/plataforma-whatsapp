@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const sidebarElement = document.getElementById('sidebar');
     const backBtn = document.getElementById('back-btn');
     const botSelector = document.getElementById('bot-selector-main');
+    const attachBtn = document.getElementById('attach-btn');
+    const mediaInput = document.getElementById('media-upload-input');
 
     let currentPhone = null;
     let messagesInterval = null;
@@ -272,6 +274,55 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Error al enviar mensaje.");
             await fetchMessages(phone, false);
         }
+    }
+
+    // --- Manejo de Archivos Multimedia ---
+    if (attachBtn && mediaInput) {
+        attachBtn.addEventListener('click', () => {
+            if (!currentPhone) return;
+            mediaInput.click();
+        });
+
+        mediaInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file || !currentPhone) return;
+
+            const captionInput = document.getElementById('message-input-text');
+            const caption = captionInput.value.trim();
+            captionInput.value = '';
+
+            const container = document.getElementById('messages-container');
+            if (container) {
+                const optimisticMsg = `<div class="message sent" style="opacity: 0.6;"><span class="msg-sender-label" style="color:#53bdeb;">👤 Tú</span>📎 Enviando archivo: ${file.name}...<span class="msg-meta">Subiendo...</span></div>`;
+                container.insertAdjacentHTML('beforeend', optimisticMsg);
+                container.scrollTop = container.scrollHeight;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('phone_number', currentPhone);
+            if (caption) {
+                formData.append('caption', caption);
+            }
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/send_media_from_dashboard`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!res.ok) {
+                    const errText = await res.text();
+                    alert(`Error enviando archivo: ${errText}`);
+                }
+                await fetchMessages(currentPhone, false);
+            } catch (error) {
+                console.error('Error enviando archivo:', error);
+                alert("Error de conexión al enviar el archivo.");
+            } finally {
+                mediaInput.value = '';
+            }
+        });
     }
 
     async function toggleHuman(phone, currentlyActive) {
