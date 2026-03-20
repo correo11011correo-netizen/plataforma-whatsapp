@@ -171,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 return `
-                <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 8px; padding: 12px 15px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; transition: box-shadow 0.2s;">
+                <div class="dynamic-option-row" style="display: flex; gap: 15px; align-items: center; margin-bottom: 8px; padding: 12px 15px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; transition: box-shadow 0.2s;">
                     <div style="background: #f1f5f9; color: #475569; font-weight: 700; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 0.95em; flex-shrink: 0;">${opt.option_key}</div>
                     <div style="flex: 1.5; font-weight: 600; color: #1e293b; font-size: 1.05em;">${opt.option_text}</div>
                     <div style="flex: 2; font-size: 0.95em;">${actionHtml}</div>
@@ -216,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <svg width="18" height="18" fill="#0ea5e9" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg>
                     Añadir una nueva opción
                 </div>
-                <div style="display: flex; gap: 15px; align-items: flex-start; flex-wrap: wrap;">
+                <div class="dynamic-option-row" style="display: flex; gap: 15px; align-items: flex-start; flex-wrap: wrap;">
                     <div style="flex: 1; min-width: 150px;">
                         <label style="display:block; font-size:0.85em; color:#64748b; margin-bottom:4px; font-weight:600;">Llave</label>
                         <div style="display:flex; align-items:center; gap:10px;">

@@ -379,13 +379,32 @@ body {
         white-space: nowrap;
         -webkit-overflow-scrolling: touch;
     }
+    
+    .split-view-container {
+        flex-direction: column !important;
+    }
+
     #menus-sidebar, #menu-detail-container {
-        flex: 1 1 100% !important;
+        flex: none !important;
         width: 100% !important;
+        min-width: 100% !important;
         max-width: 100% !important;
         margin-left: 0 !important;
         margin-right: 0 !important;
     }
+    
+    .dynamic-option-row {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+    
+    .dynamic-option-row > div {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 100% !important;
+        flex: none !important;
+    }
+    
     .modal-content {
         width: 90vw;
         padding: 20px;
