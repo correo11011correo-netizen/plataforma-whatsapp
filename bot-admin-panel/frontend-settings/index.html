@@ -60,9 +60,9 @@
                     </div>
                     
                     <!-- Contenedor Split View -->
-                    <div style="display: flex; gap: 20px; align-items: flex-start;">
+                    <div style="display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;">
                         <!-- Columna Izquierda: Lista de Menús -->
-                        <div id="menus-sidebar" style="flex: 1; min-width: 250px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; max-height: 600px; overflow-y: auto;">
+                        <div id="menus-sidebar" style="flex: 1 1 250px; min-width: 250px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; max-height: 600px; overflow-y: auto;">
                             <h4 style="margin-top: 0; color: #475569; font-size: 1.1em; border-bottom: 1px solid #cbd5e1; padding-bottom: 10px;">Tus Flujos</h4>
                             <div id="menus-list-container">
                                 <!-- Lista inyectada por JS -->
@@ -70,7 +70,7 @@
                         </div>
                         
                         <!-- Columna Derecha: Detalle del Menú Seleccionado -->
-                        <div id="menu-detail-container" style="flex: 2; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; min-height: 400px;">
+                        <div id="menu-detail-container" style="flex: 2 1 300px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; min-height: 400px;">
                             <div style="text-align: center; color: #94a3b8; margin-top: 100px;">
                                 <svg width="48" height="48" fill="currentColor" viewBox="0 0 16 16" style="margin-bottom: 15px;"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M4.285 12.433a.5.5 0 0 0 .683-.183A3.498 3.498 0 0 1 8 10.5c1.295 0 2.426.703 3.032 1.75a.5.5 0 0 0 .866-.5A4.498 4.498 0 0 0 8 9.5a4.5 4.5 0 0 0-3.898 2.25.5.5 0 0 0 .183.683zM7 6.5C7 7.328 6.552 8 6 8s-1-.672-1-1.5S5.448 5 6 5s1 .672 1 1.5zm4 0c0 .828-.448 1.5-1 1.5s-1-.672-1-1.5S9.448 5 10 5s1 .672 1 1.5z"/></svg>
                                 <h3>Selecciona un flujo a la izquierda</h3>

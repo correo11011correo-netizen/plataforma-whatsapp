@@ -296,3 +296,101 @@ body {
     justify-content: flex-end;
     gap: 10px;
 }
+
+/* Mobile Responsive Adjustments */
+@media screen and (max-width: 768px) {
+    body {
+        height: auto;
+        overflow: auto;
+    }
+    .app-container {
+        height: auto;
+        min-height: 100vh;
+    }
+    .top-nav {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 15px;
+        position: sticky;
+        top: 0;
+        z-index: 20;
+    }
+    .nav-tabs {
+        margin-top: 15px;
+        flex-wrap: wrap;
+        width: 100%;
+        justify-content: space-between;
+    }
+    .tab-btn {
+        flex: 1;
+        text-align: center;
+        padding: 10px 5px;
+        font-size: 14px;
+    }
+    .main-content {
+        overflow: visible;
+    }
+    .settings-container {
+        width: 100vw;
+        max-width: 100vw;
+        padding: 10px;
+        padding-bottom: 80px;
+        box-sizing: border-box;
+    }
+    .settings-section {
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        border-radius: 8px;
+    }
+    .settings-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+        padding: 15px;
+    }
+    .save-btn {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+    }
+    .settings-body {
+        padding: 15px;
+    }
+    .form-group {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    .menu-card {
+        padding: 10px;
+    }
+    .menu-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .menu-card-header div {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+    }
+    .options-table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+    .modal-content {
+        width: 90vw;
+        padding: 20px;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    .modal-actions {
+        flex-direction: column-reverse;
+        gap: 10px;
+    }
+    .modal-actions button {
+        width: 100%;
+        padding: 12px;
+    }
+}
