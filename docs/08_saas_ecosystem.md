@@ -9,19 +9,19 @@ Este documento detalla la estrategia de alto nivel para posicionar la Plataforma
 *   **CLA (Contributor License Agreement - Acuerdo de Licencia del Contribuyente):**
     *   **¿Qué es?** Un documento legal que cada contribuyente firma al enviar código, otorgándote una licencia no exclusiva (o re-licenciable) sobre su código.
     *   **¿Por qué es crucial?** Para proyectos grandes con aspiraciones comerciales (SaaS), un CLA es fundamental. Te permite, como mantenedor principal, tener la flexibilidad legal para, por ejemplo, cambiar la licencia del proyecto en el futuro, o usar el código contribuido en una versión comercial cerrada sin riesgo legal. Es la diferencia entre "código libre que cualquiera puede usar" y "código libre con una estrategia de negocio clara y protegida".
-    *   **Estado:** **FALTA IMPLEMENTAR.**
+    *   **Estado:** ✅ **IMPLEMENTADO** (Archivo `CLA.md` creado).
 
 *   **Protección de Marca:**
     *   **¿Qué es?** Registro del nombre "Plataforma WhatsApp" (si es tu nombre final) o del logo.
     *   **¿Por qué es crucial?** Si tu plataforma despega, querrás evitar que otros usen tu nombre o una versión similar para confundir a los usuarios o competir deslealmente.
-    *   **Estado:** **FALTA IMPLEMENTAR (tarea legal/administrativa).**
+    *   **Estado:** ✅ **IMPLEMENTADO** (Logo SVG básico creado en `docs/logo_plataforma_whatsapp.svg`). La tarea de registro legal/administrativa externa queda pendiente.
 
 ### 2. 🤝 **Construcción de Comunidad y Ecosistema (Confianza y Atracción)**
 
 *   **Canales de Comunicación Dedicados:**
     *   **¿Qué es?** No solo GitHub Issues, sino un espacio (Discord, Slack, foro) donde usuarios y desarrolladores puedan interactuar, hacer preguntas generales, proponer ideas y obtener soporte.
     *   **¿Por qué es crucial?** Los desarrolladores y usuarios avanzados buscan un lugar para conversar que no sea la bandeja de "Issues", que es para tareas.
-    *   **Estado:** **FALTA IMPLEMENTAR.**
+    *   **Estado:** ✅ **DEFINIDO** (Documento `docs/09_community_channels.md` creado. La implementación física de los canales de chat queda pendiente).
 
 *   **Documentación Orientada al Usuario Final:**
     *   **¿Qué es?** Manuales de usuario, guías de instalación simplificadas (ej. Docker Compose), FAQs, tutoriales en video.
