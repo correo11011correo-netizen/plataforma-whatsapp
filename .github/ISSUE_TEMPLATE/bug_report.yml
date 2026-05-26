@@ -1,0 +1,44 @@
+---
+name: Bug Report
+about: Report an issue with the platform
+title: "[BUG] "
+labels: bug
+assignees: ''
+
+body:
+  name: Bug Description
+  description: A clear and concise description of what the bug is.
+  required: true
+  labels: ['bug']
+
+  name: Steps to Reproduce
+  description: How can we reproduce this behavior?
+  required: true
+  with:
+    steps: |
+      1. Go to '...'
+      2. Click on '....'
+      3. Scroll down to '....'
+      4. See error
+
+  name: Expected Behavior
+  description: A clear and concise description of what you expected to happen.
+  required: true
+
+  name: Actual Behavior
+  description: What actually happened? (Include error messages if any).
+  required: true
+
+  name: Screenshots/Logs
+  description: If applicable, add screenshots or log snippets to help us understand the issue.
+  required: false
+
+  name: Environment
+  description: Information about the environment (e.g. OS, Python version, etc).
+  required: false
+  with:
+    env: |
+      OS: 
+      Python Version: 
+      Other: 
+---

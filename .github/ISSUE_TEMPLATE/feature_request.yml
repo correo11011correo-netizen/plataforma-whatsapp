@@ -1,0 +1,24 @@
+---
+name: Feature Request
+about: Suggest an idea for the platform
+title: "[FEATURE] "
+labels: ['enhancement']
+assignees: ''
+
+body:
+  name: Is your feature related to a problem? Please describe.
+  description: A clear and concise description of what the problem is.
+  required: true
+
+  name: Describe the solution you'd like
+  description: A clear and concise description of what you want to happen.
+  required: true
+
+  name: Describe the impact
+  description: A clear and concise description of how this feature will benefit the project/users.
+  required: true
+
+  name: Additional context
+  description: Add any other context or screenshots about the feature request here.
+  required: false
+---
