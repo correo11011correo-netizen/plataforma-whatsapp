@@ -5,6 +5,6 @@
       <stop offset="100%" style="stop-color:#128C7E;stop-opacity:1" />
     </linearGradient>
   </defs>
-  <path d="M100,20 C144.183,20 180,55.817 180,100 C180,119.89 173.185,138.077 161.768,151.782 L150,160 L140,160 L140,180 L100,160 C55.817,160 20,124.183 20,80 C20,55.817 55.817,20 100,20 Z" fill="url(#wa-grad)"/>
-  <text x="100" y="98" font-family="Arial, sans-serif" font-size="60" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">PW</text>
+  <path d="M170.83,31.78 C152.06,12.7 127.31,2 100,2 C45.3,2 2,45.3 2,100 C2,118.8 8.04,136.56 18.06,150.32 L0.5,199.5 L50.91,182.2 C64.67,192.22 81.42,198 100,198 C154.7,198 198,154.7 198,100 C198,72.69 187.3,47.94 170.83,31.78 Z" fill="url(#wa-grad)"/>
+  <text x="100" y="105" font-family="'Roboto Black', sans-serif" font-size="60" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">PW</text>
 </svg>
