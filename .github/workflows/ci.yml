@@ -23,12 +23,17 @@ jobs:
         if [ -f api-fundacion-idear-webhook/requirements.txt ]; then pip install -r api-fundacion-idear-webhook/requirements.txt; fi
     - name: Lint with flake8
       run: |
-        # Detener la ejecución si hay errores de linter
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # Advertir si hay errores de estilo (ignorar para no bloquear el PR, pero notificar)
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
+        # Definimos las carpetas a analizar para evitar que revise dependencias externas globales
+        TARGET_FOLDERS="bot-manager/ api-fundacion-idear-webhook/"
+        
+        # Detener la ejecución si hay errores críticos de linter
+        flake8 $TARGET_FOLDERS --count --select=E9,F63,F7,F82 --show-source --statistics
+        
+        # Advertir si hay errores de estilo (no bloquea el pipeline ni el PR)
+        flake8 $TARGET_FOLDERS --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
     - name: Test with pytest
       run: |
         # Si tienes tests, configúralos aquí. Por ahora, solo es un placeholder.
         echo "No hay tests configurados aún. ¡Este es un buen lugar para añadir los tuyos!"
         # pytest
+        
